@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "/": "./",
+    "./": "./",
+    "deno.tests": "./test_deps.ts"
+  }
+}
