@@ -1,4 +1,4 @@
-import { JSONValue, Kind, Span } from '../types/mod.ts';
+import { JSONValue, Kind } from '../types/mod.ts';
 
 export const processJSONValue = (input: JSONValue): any => {
   switch (input.kind) {
@@ -10,7 +10,7 @@ export const processJSONValue = (input: JSONValue): any => {
       return input.value;
     case Kind.Object:
       return input.value.reduce((a, b) => {
-        a[b.key] = processJSONValue(b.value);
+        a[b.key.value] = processJSONValue(b.value);
         return a;
       }, {} as Record<string, any>);
     case Kind.Array:
@@ -19,5 +19,3 @@ export const processJSONValue = (input: JSONValue): any => {
       return input.value;
   }
 };
-
-export const makeLo = (span: Span) => (span.hi === 0 ? 0 : span.hi + 1);

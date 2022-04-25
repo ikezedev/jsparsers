@@ -18,7 +18,10 @@ export const number = Parser.new<number>({
   expects: 'number',
 });
 
-export const jsonNumber: Parser<JSONNumber> = number.map((result) => ({
-  kind: Kind.Number,
-  value: result,
-}));
+export const jsonNumber: Parser<JSONNumber> = number.map(
+  ({ result: value, input: { span } }) => ({
+    kind: Kind.Number,
+    value,
+    span,
+  })
+);

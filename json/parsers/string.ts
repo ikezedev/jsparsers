@@ -1,4 +1,4 @@
-import { Input, JSONString, Kind, Parser } from '../types/mod.ts';
+import { Input, JSONString, JSONKey, Kind, Parser } from '../types/mod.ts';
 import { oneOf, oneOrMore } from './combinators.ts';
 
 export const string = Parser.new<string>({
@@ -38,10 +38,20 @@ export const literal = <T extends string>(strLiteral: T) =>
     expects: strLiteral,
   });
 
-export const jsonString: Parser<JSONString> = string.map((result) => ({
-  kind: Kind.String,
-  value: result.slice(1, -1),
-}));
+export const jsonString: Parser<JSONString> = string.map(
+  ({ result: value, input: { span } }) => ({
+    kind: Kind.String,
+    value: value.slice(1, -1),
+    span,
+  })
+);
+
+export const jsonKey: Parser<JSONKey> = jsonString.map(
+  ({ result: { kind: _, ...rest } }) => ({
+    ...rest,
+    type: 'key',
+  })
+);
 
 const whitespace = literal(' ').mapErr((_) => 'expected a whitespace');
 const newline = literal('\n').mapErr((_) => 'expected a newline');

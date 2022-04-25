@@ -19,6 +19,14 @@ export function oneOf<T, U, V, W, X>(
   p4: Parser<W>,
   p5: Parser<X>
 ): Parser<T | U | V | W | X>;
+export function oneOf<T, U, V, W, X, Y>(
+  p1: Parser<T>,
+  p2: Parser<U>,
+  p3: Parser<V>,
+  p4: Parser<W>,
+  p5: Parser<X>,
+  p6: Parser<Y>
+): Parser<T | U | V | W | X | Y>;
 
 export function oneOf(...parsers: Parser<unknown>[]): Parser<unknown> {
   return Parser.new({
@@ -117,14 +125,14 @@ export const separatedBy = <T, U>(
   allowTrailing = false
 ): Parser<T[]> =>
   allowTrailing
-    ? oneOrMore(inOrder(parser, separator).map((p) => p.first))
+    ? oneOrMore(inOrder(parser, separator).map(({ result }) => result.first))
     : inOrder(
         parser,
-        oneOrMore(inOrder(separator, parser).map((p) => p.second))
-      ).map((p) => [p.first, ...p.second]);
+        oneOrMore(inOrder(separator, parser).map(({ result }) => result.second))
+      ).map(({ result }) => [result.first, ...result.second]);
 
 export const surroundedBy = <T, U, V>(
   start: Parser<U>,
   parser: Parser<T>,
   end: Parser<V>
-): Parser<T> => inOrder(start, parser, end).map((p) => p.second);
+): Parser<T> => inOrder(start, parser, end).map(({ result }) => result.second);

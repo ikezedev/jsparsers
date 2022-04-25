@@ -40,26 +40,13 @@ export class Parser<T> {
     return this;
   }
 
-  map<U>(fn: (result: T) => U) {
+  map<U>(fn: (out: IResult<T>) => U) {
     const parseFn = this.parse;
     const expects = this.expects;
     return Parser.new({
       parse(input: Input) {
         const output = parseFn(input);
-        if ('result' in output) return { ...output, result: fn(output.result) };
-        return output;
-      },
-      expects,
-    });
-  }
-
-  mapOutput<U>(fn: (output: Output<T>) => Output<U>) {
-    const parseFn = this.parse;
-    const expects = this.expects;
-    return Parser.new({
-      parse(input: Input) {
-        const output = parseFn(input);
-        if ('result' in output) return fn(output);
+        if ('result' in output) return { ...output, result: fn(output) };
         return output;
       },
       expects,
@@ -77,15 +64,5 @@ export class Parser<T> {
       },
       expects,
     });
-  }
-
-  biMap<U>({
-    map: mapFn,
-    mapErr: mapErrFn,
-  }: {
-    map: (result: T) => U;
-    mapErr: (error: string) => string;
-  }) {
-    return this.map(mapFn).mapErr(mapErrFn);
   }
 }

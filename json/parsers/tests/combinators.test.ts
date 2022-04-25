@@ -82,7 +82,6 @@ it(oneOrMoreParser, 'union of parsers input', () => {
   assertEquals(parsed1.input.span.hi, 22);
 });
 
-// separated by
 const separatedByParser = describe('separatedBy');
 
 it(separatedByParser, 'separated by', () => {

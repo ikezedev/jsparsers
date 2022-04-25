@@ -1,48 +1,71 @@
 import { Input, JSONArray, JSONObject, Kind, Parser } from '../types/mod.ts';
-import { oneOf } from './combinators.ts';
+import { jsonBoolean } from './boolean.ts';
+import { oneOf, surroundedBy, separatedBy, inOrder } from './combinators.ts';
 import { jsonNull } from './null.ts';
 import { jsonNumber } from './number.ts';
-import { jsonString } from './string.ts';
+import { jsonKey, jsonString, literal, optionalSpaces } from './string.ts';
 
 export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
   parse(input: Input) {
-    const elemParsers = oneOf(
+    const op = literal('[');
+    const cl = literal(']');
+    const elements = oneOf(
       jsonNull,
+      jsonBoolean,
       jsonString,
       jsonNumber,
       jsonObject,
       jsonArray
     );
-    const { source, span } = input;
-    if (source[span.hi + 1] === '"') {
-      const end = source.substring(span.hi + 2).indexOf('"');
-      return {
-        result: {
-          value: source.substring(span.hi + 2, end - 1),
-          kind: Kind.String,
-        },
-        input: { ...input, span: { lo: span.hi + 1, hi: end } },
-      };
-    }
-    return { error: 'expected a string', input };
+    const comma = literal(',');
+    const sepParser = separatedBy(
+      elements,
+      inOrder(optionalSpaces, comma, optionalSpaces)
+    );
+    return surroundedBy(op, sepParser, cl)
+      .map(
+        ({ result: value, input: { span } }) =>
+          ({ kind: Kind.Array, value, span } as const)
+      )
+      .parse(input);
   },
-  expects: 'string',
+  expects: 'array',
 });
 
-export const jsonObject: Parser<JSONObject> = {
+export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   parse(input: Input) {
-    const { source, span } = input;
-    if (source[span.hi + 1] === '"') {
-      const end = source.substring(span.hi + 2).indexOf('"');
-      return {
-        result: {
-          value: source.substring(span.hi + 2, end - 1),
-          kind: Kind.String,
-        },
-        input: { ...input, span: { lo: span.hi + 1, hi: end } },
-      };
-    }
-    return { error: 'expected a string', input };
+    const op = literal('{');
+    const cl = literal('}');
+    const key = inOrder(optionalSpaces, jsonKey, optionalSpaces).map(
+      ({ result }) => result.second
+    );
+    const colon = literal(':');
+    const elements = oneOf(
+      jsonNull,
+      jsonBoolean,
+      jsonString,
+      jsonNumber,
+      jsonArray,
+      jsonObject
+    );
+    const value = inOrder(optionalSpaces, elements, optionalSpaces).map(
+      ({ result }) => result.second
+    );
+    const entry = inOrder(key, colon, value).map(({ result }) => ({
+      key: result.first,
+      value: result.third,
+    }));
+    const comma = literal(',');
+    const sepParser = separatedBy(
+      entry,
+      inOrder(optionalSpaces, comma, optionalSpaces)
+    );
+    return surroundedBy(op, sepParser, cl)
+      .map(
+        ({ result: value, input: { span } }) =>
+          ({ kind: Kind.Object, value, span } as const)
+      )
+      .parse(input);
   },
-  expects: 'string',
-};
+  expects: 'object',
+});
