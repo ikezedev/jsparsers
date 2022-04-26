@@ -24,7 +24,7 @@
 
     ```ts
     inOrder(Parser<T>, Parser<U>): Parser<Pair<T, U>>
-    inOrder(Parser<T>, Parser<U>, Parser<V>): Parser<Pair<T, U, V>>
+    inOrder(Parser<T>, Parser<U>, Parser<V>): Parser<Triple<T, U, V>>
     ```
 
 - separatedBy
