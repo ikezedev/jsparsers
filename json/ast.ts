@@ -1,4 +1,4 @@
-import { Span } from './parser.ts';
+import { Span } from '~types/parser.ts';
 
 export enum Kind {
   String = 'string',

@@ -1,7 +1,8 @@
 import { describe, it, assert, assertEquals } from 'deno.tests';
 import { literal, string } from '../string.ts';
+import { parsersTests } from './utils.ts';
 
-const stringParser = describe('string parser');
+const stringParser = describe(parsersTests, 'string parser');
 
 it(stringParser, 'parser works', () => {
   const input = { source: `"test"`, span: { lo: 0, hi: 0 } };
@@ -29,7 +30,7 @@ it(stringParser, 'fails for non-terminated strings', () => {
   assertEquals(parsed.input.span.hi, 0);
 });
 
-const literalParser = describe('literal parser');
+const literalParser = describe(parsersTests, 'literal parser');
 
 it(literalParser, 'parser works', () => {
   const input = { source: `123`, span: { lo: 0, hi: 0 } };

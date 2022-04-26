@@ -1,7 +1,8 @@
 import { assert, assertEquals, describe, it } from 'deno.tests';
 import { nullParser } from '../null.ts';
+import { parsersTests } from './utils.ts';
 
-const nullParserTest = describe('null parser');
+const nullParserTest = describe(parsersTests, 'null parser');
 
 it(nullParserTest, 'works as expected', () => {
   const input = { source: `null`, span: { lo: 0, hi: 0 } };

@@ -1,4 +1,4 @@
-import { Input, JSONNumber, Kind, Parser } from '../types/mod.ts';
+import { Input, Parser } from '~types/parser.ts';
 
 export const number = Parser.new<number>({
   parse(input: Input) {
@@ -17,11 +17,3 @@ export const number = Parser.new<number>({
   },
   expects: 'number',
 });
-
-export const jsonNumber: Parser<JSONNumber> = number.map(
-  ({ result: value, input: { span } }) => ({
-    kind: Kind.Number,
-    value,
-    span,
-  })
-);

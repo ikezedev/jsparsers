@@ -1,7 +1,8 @@
 import { describe, it, assert, assertEquals } from 'deno.tests';
 import { number } from '../number.ts';
+import { parsersTests } from './utils.ts';
 
-const numberParser = describe('number parser');
+const numberParser = describe(parsersTests, 'number parser');
 
 it(numberParser, 'works for integers', () => {
   const input = { source: `123`, span: { lo: 0, hi: 0 } };

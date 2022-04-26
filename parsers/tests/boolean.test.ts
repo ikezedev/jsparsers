@@ -1,7 +1,8 @@
 import { assert, assertEquals, describe, it } from 'deno.tests';
 import { boolean } from '../boolean.ts';
+import { parsersTests } from './utils.ts';
 
-const booleanParserTest = describe('boolean parser');
+const booleanParserTest = describe(parsersTests, 'boolean parser');
 
 it(booleanParserTest, 'works for false', () => {
   const input = { source: `false`, span: { lo: 0, hi: 0 } };

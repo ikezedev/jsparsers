@@ -2,6 +2,10 @@
   "imports": {
     "/": "./",
     "./": "./",
-    "deno.tests": "./test_deps.ts"
+    "deno.tests": "./test_deps.ts",
+    "~combinators/": "./combinators/",
+    "~types/": "./types/",
+    "~ds/": "./ds/",
+    "~parsers/": "./parsers/"
   }
 }
