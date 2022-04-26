@@ -132,7 +132,9 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
 const json: Parser<JSONValue> = oneOf(jsonArray, jsonObject);
 export const Json = {
   parse(source: string) {
-    return json.parse({ source, span: { lo: 0, hi: 0 } });
+    const output = json.parse({ source, span: { lo: 0, hi: 0 } });
+    if ('result' in output) return processJSONValue(output.result);
+    return output;
   },
 };
 
