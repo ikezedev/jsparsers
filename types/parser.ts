@@ -19,7 +19,6 @@ export type IError = {
 };
 
 export type Output<T> = IResult<T> | IError;
-
 export class Parser<T> {
   private constructor(
     public parse: (inp: Input) => Output<T>,
@@ -52,7 +51,7 @@ export class Parser<T> {
       expects,
     });
   }
-
+  // TODO: take whole output like in map
   mapErr(fn: (error: string) => string) {
     const parseFn = this.parse;
     const expects = this.expects;

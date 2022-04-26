@@ -7,13 +7,14 @@ export const string = Parser.new<string>({
     const lo = span.hi;
     if (source[lo] === '"') {
       const hi = source.substring(lo + 1).indexOf('"');
-      if (hi === -1) return { error: 'expected a closing "', input };
+      if (hi === -1)
+        return { error: `expected a closing quote for quote at ${lo}`, input };
       return {
         result: source.substring(lo, lo + hi + 2),
         input: { ...input, span: { lo, hi: lo + hi + 2 } },
       };
     }
-    return { error: 'expected a string', input };
+    return { error: `expected a string at ${lo}`, input };
   },
   expects: 'string',
 });
@@ -31,7 +32,7 @@ export const literal = <T extends string>(strLiteral: T) =>
           input: { ...input, span: { lo, hi } },
         };
       return {
-        error: `expected literal: ${strLiteral}`,
+        error: `expected literal: ${strLiteral} at ${lo}`,
         input,
       };
     },

@@ -38,8 +38,9 @@ export function inOrder(
         },
       };
     },
-    expects: `${p1.expects}, ${p2.expects}${
-      p3 ? ', ' + p3.expects : ''
-    } in succession`,
+    expects: `${[p1, p2, p3]
+      .map((p) => p?.expects)
+      .filter(Boolean)
+      .join(', ')} in succession`,
   });
 }

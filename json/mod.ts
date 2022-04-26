@@ -1,1 +1,1 @@
-export { json as Json } from './json.ts';
+export { Json, processJSONValue } from './json.ts';

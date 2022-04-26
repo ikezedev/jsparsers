@@ -13,7 +13,7 @@ export const number = Parser.new<number>({
           span: { lo, hi: lo + match.length },
         },
       };
-    return { error: 'expected a number', input };
+    return { error: `expected a number at ${lo}`, input };
   },
   expects: 'number',
 });

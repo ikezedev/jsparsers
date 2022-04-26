@@ -75,12 +75,15 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
       elements,
       inOrder(optionalSpaces, comma, optionalSpaces)
     );
-    return surroundedBy(op, sepParser, cl)
-      .map(
-        ({ result: value, input: { span } }) =>
-          ({ kind: Kind.Array, value, span } as const)
-      )
-      .parse(input);
+    const empty = surroundedBy(op, optionalSpaces, cl).map(
+      ({ input: { span } }) =>
+        ({ kind: Kind.Array, value: [] as JSONValue[], span } as const)
+    );
+    const nonEmpty = surroundedBy(op, sepParser, cl).map(
+      ({ result: value, input: { span } }) =>
+        ({ kind: Kind.Array, value, span } as const)
+    );
+    return oneOf(nonEmpty, empty).parse(input);
   },
   expects: 'array',
 });
@@ -113,17 +116,25 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       entry,
       inOrder(optionalSpaces, comma, optionalSpaces)
     );
-    return surroundedBy(op, sepParser, cl)
-      .map(
-        ({ result: value, input: { span } }) =>
-          ({ kind: Kind.Object, value, span } as const)
-      )
-      .parse(input);
+    const empty = surroundedBy(op, optionalSpaces, cl).map(
+      ({ input: { span } }) =>
+        ({ kind: Kind.Object, value: [] as JSONObject['value'], span } as const)
+    );
+    const nonEmpty = surroundedBy(op, sepParser, cl).map(
+      ({ result: value, input: { span } }) =>
+        ({ kind: Kind.Object, value, span } as const)
+    );
+    return oneOf(nonEmpty, empty).parse(input);
   },
   expects: 'object',
 });
 
-export const json: Parser<JSONValue> = oneOf(jsonArray, jsonObject);
+const json: Parser<JSONValue> = oneOf(jsonArray, jsonObject);
+export const Json = {
+  parse(source: string) {
+    return json.parse({ source, span: { lo: 0, hi: 0 } });
+  },
+};
 
 export const processJSONValue = (input: JSONValue): unknown => {
   switch (input.kind) {
