@@ -1,5 +1,5 @@
 import { Parser, Input } from '~types/parser.ts';
-import { Triple, Pair } from '~ds/container.ts';
+import { Triple, Pair } from '~ds/containers.ts';
 
 export function inOrder<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<Pair<T, U>>;
 export function inOrder<T, U, V>(
