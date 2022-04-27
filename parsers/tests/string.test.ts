@@ -1,4 +1,10 @@
-import { describe, it, assert, assertEquals } from 'deno.tests';
+import {
+  describe,
+  it,
+  assert,
+  assertEquals,
+  assertStringIncludes,
+} from 'deno.tests';
 import { literal, string } from '../string.ts';
 import { parsersTests } from './utils.ts';
 
@@ -25,7 +31,7 @@ it(stringParser, 'fails for non-terminated strings', () => {
   const input = { source: `"test`, span: { lo: 0, hi: 0 } };
   const parsed = string.parse(input);
   assert('error' in parsed);
-  assertEquals(parsed.error, 'expected a closing "');
+  assertStringIncludes(parsed.error, 'expected a closing quote');
   assertEquals(parsed.input.span.lo, 0);
   assertEquals(parsed.input.span.hi, 0);
 });
@@ -54,7 +60,7 @@ it(literalParser, 'fails for non-matching literals', () => {
   const input = { source: `123`, span: { lo: 0, hi: 0 } };
   const parsed = literal('124').parse(input);
   assert('error' in parsed);
-  assertEquals(parsed.error, `expected literal: 124`);
+  assertStringIncludes(parsed.error, `expected literal: 124`);
   assertEquals(parsed.input.span.lo, 0);
   assertEquals(parsed.input.span.hi, 0);
 });

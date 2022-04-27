@@ -1,5 +1,6 @@
 import { Parser, Input } from '~types/parser.ts';
 
+export function oneOf<T>(...parsers: Parser<T>[]): Parser<T>;
 export function oneOf<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<T | U>;
 export function oneOf<T, U, V>(
   p1: Parser<T>,

@@ -51,6 +51,11 @@ export class Parser<T> {
       expects,
     });
   }
+
+  mapResult<U>(fn: (result: T) => U) {
+    return this.map(({ result }) => fn(result));
+  }
+
   // TODO: take whole output like in map
   mapErr(fn: (error: string) => string) {
     const parseFn = this.parse;

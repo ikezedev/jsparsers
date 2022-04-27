@@ -37,3 +37,25 @@ it(numberParser, 'fails for floats started a dot', () => {
   assertEquals(parsed.input.span.lo, 0);
   assertEquals(parsed.input.span.hi, 0);
 });
+
+Deno.test('works for negative numbers', () => {
+  const intInput = { source: `-10`, span: { lo: 0, hi: 0 } };
+  const floatInput = { source: `-123.90`, span: { lo: 0, hi: 0 } };
+  let parsed = number.parse(intInput);
+  assert('result' in parsed);
+  assertEquals(parsed.result, -10);
+  parsed = number.parse(floatInput);
+  assert('result' in parsed);
+  assertEquals(parsed.result, -123.9);
+});
+
+Deno.test('works for exponents', () => {
+  const negInput = { source: `-10E-23`, span: { lo: 0, hi: 0 } };
+  const posInput = { source: `123e-9`, span: { lo: 0, hi: 0 } };
+  let parsed = number.parse(negInput);
+  assert('result' in parsed);
+  assertEquals(parsed.result, -10e-23);
+  parsed = number.parse(posInput);
+  assert('result' in parsed);
+  assertEquals(parsed.result, 123e-9);
+});

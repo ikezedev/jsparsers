@@ -1,18 +1,21 @@
 import { Parser, Input } from '~types/parser.ts';
-import { Triple, Pair } from '~ds/containers.ts';
+import { Triple, Pair, Show } from '~ds/containers.ts';
 
-export function inOrder<T, U>(p1: Parser<T>, p2: Parser<U>): Parser<Pair<T, U>>;
-export function inOrder<T, U, V>(
+export function inOrder<T extends Show, U extends Show>(
+  p1: Parser<T>,
+  p2: Parser<U>
+): Parser<Pair<T, U>>;
+export function inOrder<T extends Show, U extends Show, V extends Show>(
   p1: Parser<T>,
   p2: Parser<U>,
   p3: Parser<V>
 ): Parser<Triple<T, U, V>>;
 
 export function inOrder(
-  p1: Parser<unknown>,
-  p2: Parser<unknown>,
-  p3?: Parser<unknown>
-): Parser<Triple<unknown, unknown, unknown>> | Parser<Pair<unknown, unknown>> {
+  p1: Parser<Show>,
+  p2: Parser<Show>,
+  p3?: Parser<Show>
+): Parser<Triple<Show, Show, Show>> | Parser<Pair<Show, Show>> {
   return Parser.new({
     parse(input: Input) {
       const o1 = p1.parse(input);
