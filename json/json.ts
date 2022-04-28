@@ -3,7 +3,7 @@ import {
   literal,
   nullParser,
   number,
-  optionalSpaces,
+  optionalWhitespaces as ows,
   string,
 } from '~parsers/mod.ts';
 import { inOrder, oneOf, separatedBy, surroundedBy } from '~combinators/mod.ts';
@@ -71,11 +71,8 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
       jsonArray
     );
     const comma = literal(',');
-    const sepParser = separatedBy(
-      elements,
-      inOrder(optionalSpaces, comma, optionalSpaces)
-    );
-    const empty = surroundedBy(op, optionalSpaces, cl).map(
+    const sepParser = separatedBy(elements, inOrder(ows, comma, ows));
+    const empty = surroundedBy(op, ows, cl).map(
       ({ input: { span } }) =>
         ({ kind: Kind.Array, value: [] as JSONValue[], span } as const)
     );
@@ -92,9 +89,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   parse(input: Input) {
     const op = literal('{');
     const cl = literal('}');
-    const key = inOrder(optionalSpaces, jsonKey, optionalSpaces).map(
-      ({ result }) => result.second
-    );
+    const key = inOrder(ows, jsonKey, ows).map(({ result }) => result.second);
     const colon = literal(':');
     const elements = oneOf(
       jsonNull,
@@ -104,7 +99,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       jsonArray,
       jsonObject
     );
-    const value = inOrder(optionalSpaces, elements, optionalSpaces).map(
+    const value = inOrder(ows, elements, ows).map(
       ({ result }) => result.second
     );
     const entry = inOrder(key, colon, value).map(({ result }) => ({
@@ -112,11 +107,8 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       value: result.third,
     }));
     const comma = literal(',');
-    const sepParser = separatedBy(
-      entry,
-      inOrder(optionalSpaces, comma, optionalSpaces)
-    );
-    const empty = surroundedBy(op, optionalSpaces, cl).map(
+    const sepParser = separatedBy(entry, inOrder(ows, comma, ows));
+    const empty = surroundedBy(op, ows, cl).map(
       ({ input: { span } }) =>
         ({ kind: Kind.Object, value: [] as JSONObject['value'], span } as const)
     );

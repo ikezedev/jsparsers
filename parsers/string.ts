@@ -39,12 +39,10 @@ export const literal = <T extends string>(strLiteral: T) =>
     expects: strLiteral,
   });
 
-const whitespace = literal(' ').mapErr((_) => 'expected a whitespace');
-const newline = literal('\n').mapErr((_) => 'expected a newline');
-const tab = literal('\t').mapErr((_) => 'expected a tab');
+const l = literal;
 
-export const space = oneOf(whitespace, newline, tab);
+export const space = oneOf(l(' '), l('\n'), l('\t'), l('\r'));
 
-export const spaces = oneOrMore(space);
+export const whitespaces = oneOrMore(space);
 
-export const optionalSpaces = oneOf(oneOrMore(space), literal(''));
+export const optionalWhitespaces = oneOf(whitespaces, literal(''));
