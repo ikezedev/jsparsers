@@ -52,6 +52,19 @@ export class Parser<T> {
     });
   }
 
+  chain<U>(fn: (out: IResult<T>) => Output<U>) {
+    const parseFn = this.parse;
+    const expects = this.expects;
+    return Parser.new({
+      parse(input: Input) {
+        const output = parseFn(input);
+        if ('result' in output) return fn(output);
+        return output;
+      },
+      expects,
+    });
+  }
+
   mapResult<U>(fn: (result: T) => U) {
     return this.map(({ result }) => fn(result));
   }

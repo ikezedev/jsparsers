@@ -1,5 +1,5 @@
 import { oneOf } from '~combinators/mod.ts';
-import { literal } from './string.ts';
+import { literal } from './literal.ts';
 
 export const boolean = oneOf(
   literal('false').map((_) => false),

@@ -1,5 +1,6 @@
 {
   "tasks": {
     "test": "deno test --importmap=import_map.json"
-  }
+  },
+  "importMap": "./import_map.json"
 }

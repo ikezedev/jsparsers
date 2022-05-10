@@ -5,10 +5,10 @@ import {
   assertEquals,
   assertStringIncludes,
 } from 'deno.tests';
-import { literal, string } from '../string.ts';
+import { string, stringNew } from '../string.ts';
 import { parsersTests } from './utils.ts';
 
-const stringParser = describe(parsersTests, 'string parser');
+const stringParser = describe.ignore(parsersTests, 'string parser');
 
 it(stringParser, 'parser works', () => {
   const input = { source: `"test"`, span: { lo: 0, hi: 0 } };
@@ -36,40 +36,73 @@ it(stringParser, 'fails for non-terminated strings', () => {
   assertEquals(parsed.input.span.hi, 0);
 });
 
-const literalParser = describe(parsersTests, 'literal parser');
+// const newStringParser = describe('spec compatible string parser');
 
-it(literalParser, 'parser works', () => {
-  const input = { source: `123`, span: { lo: 0, hi: 0 } };
-  const parsed = literal('123').parse(input);
-  assert('result' in parsed);
-  assertEquals(parsed.result, `123`);
-  assertEquals(parsed.input.span.lo, 0);
-  assertEquals(parsed.input.span.hi, 3);
+Deno.test('works for basic string', () => {
+  const input = { source: `test`, span: { lo: 0, hi: 0 } };
+  const valid = [`""`, `"\\\\"`, `"\\\\\"`, `"\\\\\\\\"`, `"\\\\me"`];
+  const expected = [``, `\\`, `\\`, `\\\\`, `\\me`];
+  const invalid = [`"\\"`, `"\\\\\\"`, `"\\\\\\\"`];
+
+  for (const [i, source] of valid.entries()) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert(
+      'result' in parsed,
+      `[${i}] got: ${JSON.stringify(parsed, null, 2)}`
+    );
+    assertEquals(parsed.result, expected[i]);
+  }
+
+  for (const source of invalid) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert('error' in parsed);
+  }
 });
 
-it(literalParser, 'takes only what is needed', () => {
-  const input = { source: `12345`, span: { lo: 0, hi: 0 } };
-  const parsed = literal('123').parse(input);
-  assert('result' in parsed);
-  assertEquals(parsed.result, `123`);
-  assertEquals(parsed.input.span.lo, 0);
-  assertEquals(parsed.input.span.hi, 3);
-});
-
-it(literalParser, 'fails for non-matching literals', () => {
-  const input = { source: `123`, span: { lo: 0, hi: 0 } };
-  const parsed = literal('124').parse(input);
-  assert('error' in parsed);
-  assertStringIncludes(parsed.error, `expected literal: 124`);
-  assertEquals(parsed.input.span.lo, 0);
-  assertEquals(parsed.input.span.hi, 0);
-});
-
-it(literalParser, 'works for empty literal', () => {
+Deno.test('control characters', () => {
   const input = { source: ``, span: { lo: 0, hi: 0 } };
-  const parsed = literal('').parse(input);
-  assert('result' in parsed);
-  assertEquals(parsed.result, ``);
-  assertEquals(parsed.input.span.lo, 0);
-  assertEquals(parsed.input.span.hi, 0);
+  const valid = [`"\\n"`, `"\\\\n"`, `"\\\\\\n"`, `"\\""`];
+  const expected = [`\n`, `\\n`, `\\\n`, `"`];
+  const invalid = [`"\n"`, `"\\\n"`, `"\\\\\n"`, `"\\j"`];
+
+  for (const [i, source] of valid.entries()) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert(
+      'result' in parsed,
+      `[${i}] got: ${JSON.stringify(parsed, null, 2)}`
+    );
+    assertEquals(parsed.result, expected[i]);
+  }
+
+  for (const [i, source] of invalid.entries()) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert('error' in parsed, `${i} failed`);
+  }
+});
+
+Deno.test('unicode characters', () => {
+  const input = { source: ``, span: { lo: 0, hi: 0 } };
+  const valid = [
+    `"\u7832"`,
+    `"\\u7832"`,
+    `"\u7832\uaab5"`,
+    `"\\u7832\\uaab5"`,
+    `"\\u7832 \\uaab5"`,
+  ];
+  const expected = ['砲', '砲', '砲ꪵ', '砲ꪵ', '砲 ꪵ'];
+  const invalid = [`"\\u783t"`, `"\\\uffff"`];
+
+  for (const [i, source] of valid.entries()) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert(
+      'result' in parsed,
+      `[${i}] got: ${JSON.stringify(parsed, null, 2)}`
+    );
+    assertEquals(parsed.result, expected[i]);
+  }
+
+  for (const [i, source] of invalid.entries()) {
+    const parsed = stringNew.parse({ ...input, source });
+    assert('error' in parsed, `${i} failed`);
+  }
 });

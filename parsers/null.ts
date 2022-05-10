@@ -1,4 +1,4 @@
-import { literal } from './string.ts';
+import { literal } from './literal.ts';
 
 export const nullParser = literal('null')
   .map(() => null)

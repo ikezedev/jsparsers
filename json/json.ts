@@ -4,7 +4,7 @@ import {
   nullParser,
   number,
   optionalWhitespaces as ows,
-  string,
+  stringNew,
 } from '~parsers/mod.ts';
 import { inOrder, oneOf, separatedBy, surroundedBy } from '~combinators/mod.ts';
 import {
@@ -20,10 +20,10 @@ import {
 } from './ast.ts';
 import { Input, Parser } from '~types/parser.ts';
 
-const jsonString: Parser<JSONString> = string.map(
+const jsonString: Parser<JSONString> = stringNew.map(
   ({ result: value, input: { span } }) => ({
     kind: Kind.String,
-    value: value.slice(1, -1),
+    value,
     span,
   })
 );
@@ -133,7 +133,7 @@ export const Json = {
   parse<T>(source: string) {
     const output = json.parse({ source, span: { lo: 0, hi: 0 } });
     if ('result' in output) return processJSONValue(output.result) as T;
-    return output;
+    throw new SyntaxError(output.error);
   },
 };
 
