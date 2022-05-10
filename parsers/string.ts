@@ -1,4 +1,4 @@
-import { oneOf, oneOrMore } from '~combinators/mod.ts';
+import { oneOf, oneOrMore, inOrder } from '~combinators/mod.ts';
 import { Parser, Input } from '~types/parser.ts';
 
 export const string = Parser.new<string>({
@@ -46,3 +46,8 @@ export const space = oneOf(l(' '), l('\n'), l('\t'), l('\r'));
 export const whitespaces = oneOrMore(space);
 
 export const optionalWhitespaces = oneOf(whitespaces, literal(''));
+
+export const stringNew = () => {
+  const escapes = '"/\\bfnrt';
+  const unicode = inOrder(l('u'));
+};

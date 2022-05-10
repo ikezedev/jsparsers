@@ -121,11 +121,18 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   expects: 'object',
 });
 
-const json: Parser<JSONValue> = oneOf(jsonArray, jsonObject);
+const json: Parser<JSONValue> = oneOf(
+  jsonArray,
+  jsonObject,
+  jsonNull,
+  jsonNumber,
+  jsonString,
+  jsonBoolean
+);
 export const Json = {
-  parse(source: string) {
+  parse<T>(source: string) {
     const output = json.parse({ source, span: { lo: 0, hi: 0 } });
-    if ('result' in output) return processJSONValue(output.result);
+    if ('result' in output) return processJSONValue(output.result) as T;
     return output;
   },
 };
