@@ -5,6 +5,7 @@ import {
   number,
   optionalWhitespaces as ows,
   stringNew,
+  string,
 } from '~parsers/mod.ts';
 import { inOrder, oneOf, separatedBy, surroundedBy } from '~combinators/mod.ts';
 import {
@@ -19,6 +20,8 @@ import {
   JSONBoolean,
 } from './ast.ts';
 import { Input, Parser } from '~types/parser.ts';
+
+type Reviver = (key: string, value: unknown) => unknown;
 
 const jsonString: Parser<JSONString> = stringNew.map(
   ({ result: value, input: { span } }) => ({
@@ -89,8 +92,10 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   parse(input: Input) {
     const op = literal('{');
     const cl = literal('}');
-    const key = inOrder(ows, jsonKey, ows).map(({ result }) => result.second);
-    const colon = literal(':');
+    const key = inOrder(ows, jsonKey, ows)
+      .map(({ result }) => result.second)
+      .setExpects('key');
+    const colon = literal(':').setExpects('colon');
     const elements = oneOf(
       jsonNull,
       jsonBoolean,
@@ -99,19 +104,27 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       jsonArray,
       jsonObject
     );
-    const value = inOrder(ows, elements, ows).map(
-      ({ result }) => result.second
-    );
+
+    const value = inOrder(ows, elements, ows)
+      .map(({ result }) => result.second)
+      .setExpects('value');
+
     const entry = inOrder(key, colon, value).map(({ result }) => ({
       key: result.first,
       value: result.third,
     }));
-    const comma = literal(',');
-    const sepParser = separatedBy(entry, inOrder(ows, comma, ows));
-    const empty = surroundedBy(op, ows, cl).map(
-      ({ input: { span } }) =>
-        ({ kind: Kind.Object, value: [] as JSONObject['value'], span } as const)
-    );
+    const comma = inOrder(ows, literal`,`, ows).setExpects('comma');
+    const sepParser = separatedBy(entry, comma);
+    const empty = surroundedBy(op, ows, cl)
+      .map(
+        ({ input: { span } }) =>
+          ({
+            kind: Kind.Object,
+            value: [] as JSONObject['value'],
+            span,
+          } as const)
+      )
+      .setExpects('nothing');
     const nonEmpty = surroundedBy(op, sepParser, cl).map(
       ({ result: value, input: { span } }) =>
         ({ kind: Kind.Object, value, span } as const)
@@ -121,38 +134,55 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   expects: 'object',
 });
 
-const json: Parser<JSONValue> = oneOf(
-  jsonArray,
-  jsonObject,
-  jsonNull,
-  jsonNumber,
-  jsonString,
-  jsonBoolean
+const json: Parser<JSONValue> = surroundedBy(
+  ows,
+  oneOf(jsonNull, jsonNumber, jsonString, jsonBoolean, jsonArray, jsonObject)
 );
 export const Json = {
-  parse<T>(source: string) {
-    const output = json.parse({ source, span: { lo: 0, hi: 0 } });
-    if ('result' in output) return processJSONValue(output.result) as T;
+  parse<T = any>(text: string, reviver?: Reviver) {
+    const output = json.parse({
+      source: text.toString(),
+      span: { lo: 0, hi: 0 },
+    });
+    if ('result' in output) {
+      const hi = output.input.span.hi;
+      if (hi !== text.toString().length)
+        throw new SyntaxError(`Unexpected token in JSON at ${hi}`);
+      return processJSONValue(output.result, reviver) as T;
+    }
     throw new SyntaxError(output.error);
   },
 };
 
-export const processJSONValue = (input: JSONValue): unknown => {
+export function processJSONValue(input: JSONValue, reviver?: Reviver): unknown {
+  let result: unknown;
   switch (input.kind) {
     case Kind.Null:
-      return null;
+      result = null;
+      break;
     case Kind.String:
-      return input.value;
+      result = input.value;
+      break;
     case Kind.Number:
-      return input.value;
+      result = input.value;
+      break;
     case Kind.Object:
-      return input.value.reduce((a, b) => {
-        a[b.key.value] = processJSONValue(b.value);
+      result = input.value.reduce((a, b) => {
+        const [key, value] = [b.key.value, processJSONValue(b.value)];
+        if (reviver) {
+          a[key] = reviver.apply({ [key]: value }, [key, value]);
+        } else {
+          a[b.key.value] = processJSONValue(b.value);
+        }
         return a;
       }, {} as Record<string, unknown>);
+      break;
     case Kind.Array:
-      return input.value.map(processJSONValue);
+      result = input.value.map((v) => processJSONValue(v));
+      break;
     case Kind.Boolean:
-      return input.value;
+      result = input.value;
   }
-};
+  if (reviver) return reviver.apply({ '': result }, ['', result]);
+  return result;
+}

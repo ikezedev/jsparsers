@@ -7,6 +7,7 @@ export const oneOrMore = <T>(parser: Parser<T>): Parser<T[]> =>
       let lastOutput = parser.parse(input);
       if ('result' in lastOutput) outputs.push(lastOutput);
       let nextInput = lastOutput.input;
+
       while (
         nextInput.span.hi < nextInput.source.length &&
         !('error' in lastOutput)
@@ -15,6 +16,7 @@ export const oneOrMore = <T>(parser: Parser<T>): Parser<T[]> =>
         if ('result' in lastOutput) outputs.push(lastOutput);
         nextInput = lastOutput.input;
       }
+
       if (!outputs.length) {
         return {
           input,

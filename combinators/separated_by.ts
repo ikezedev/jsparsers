@@ -1,6 +1,7 @@
 import { Parser } from '~types/parser.ts';
 import { inOrder } from './in_order.ts';
 import { oneOrMore } from './one_or_more.ts';
+import { zeroOrMore } from './zeroOrMore.ts';
 
 export const separatedBy = <T, U>(
   parser: Parser<T>,
@@ -11,5 +12,7 @@ export const separatedBy = <T, U>(
     ? oneOrMore(inOrder(parser, separator).map(({ result }) => result.first))
     : inOrder(
         parser,
-        oneOrMore(inOrder(separator, parser).map(({ result }) => result.second))
+        zeroOrMore(
+          inOrder(separator, parser).map(({ result }) => result.second)
+        )
       ).map(({ result }) => [result.first, ...result.second]);

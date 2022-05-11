@@ -28,11 +28,11 @@ export const string = Parser.new<string>({
   expects: 'string',
 });
 
-export const space = oneOf(l(' '), l('\n'), l('\t'), l('\r'));
+export const space = oneOf(...' \r\n\t'.split('').map(l));
 
 export const whitespaces = oneOrMore(space);
 
-export const optionalWhitespaces = oneOf(whitespaces, l(''));
+export const optionalWhitespaces = oneOf(whitespaces, l('')).setExpects('');
 
 const join = (arr: string[] | readonly string[]) => arr.join('');
 
@@ -60,7 +60,6 @@ export const stringNew = (() => {
   const validSequence = oneOf(rSolidus, escapedControls, unicode, anyChar);
   return surroundedBy(
     l`"`,
-    oneOf(oneOrMore(validSequence).mapResult(join), l``),
-    l`"`
-  );
+    oneOf(oneOrMore(validSequence).mapResult(join), l``)
+  ).setExpects('string');
 })();

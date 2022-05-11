@@ -38,9 +38,14 @@ export function oneOf(...parsers: Parser<unknown>[]): Parser<unknown> {
       }
       return {
         input,
-        error: `Expected one of ${parsers.map((p) => p.expects).join(', ')}`,
+        error: `Expected one of ${parsers
+          .map((p) => `"${p.expects}"`)
+          .join(', ')}`,
       };
     },
-    expects: parsers.map((p) => p.expects).join(', '),
+    expects: parsers
+      .map((p) => p.expects)
+      .filter(Boolean)
+      .join(', '),
   });
 }

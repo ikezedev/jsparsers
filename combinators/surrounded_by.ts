@@ -1,8 +1,10 @@
 import { Parser } from '~types/parser.ts';
+import { Show } from '../ds/containers.ts';
 import { inOrder } from './in_order.ts';
 
-export const surroundedBy = <T, U, V>(
-  start: Parser<U>,
+export const surroundedBy = <T>(
+  start: Parser<Show>,
   parser: Parser<T>,
-  end: Parser<V>
-): Parser<T> => inOrder(start, parser, end).map(({ result }) => result.second);
+  end?: Parser<Show>
+): Parser<T> =>
+  inOrder(start, parser, end ?? start).map(({ result }) => result.second);
