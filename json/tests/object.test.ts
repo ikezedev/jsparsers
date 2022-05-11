@@ -38,7 +38,6 @@ it(objectArrayParser, 'nested simple elements 2', () => {
     span: { lo: 0, hi: 0 },
   };
   const parsed = jsonObject.parse(input);
-  console.log(globalThis.JSON.stringify(parsed));
   assert('result' in parsed);
   assertEquals(processJSONValue(parsed.result), {
     '1': 1,
