@@ -8,7 +8,7 @@ import {
 import { string, stringNew } from '../string.ts';
 import { parsersTests } from './utils.ts';
 
-const stringParser = describe.ignore(parsersTests, 'string parser');
+const stringParser = describe(parsersTests, 'string parser');
 
 it(stringParser, 'parser works', () => {
   const input = { source: `"test"`, span: { lo: 0, hi: 0 } };

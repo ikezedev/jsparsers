@@ -37,7 +37,11 @@ export const optionalWhitespaces = oneOf(whitespaces, l('')).setExpects('');
 const join = (arr: string[] | readonly string[]) => arr.join('');
 
 export const stringNew = (() => {
-  const controls = oneOf(l`\n`, l`\b`, l`\f`, l`\r`, l`\t`, l`\\`, l`"`);
+  const invalid = oneOf(
+    ...Array.from({ length: 32 }, (_, i) => l(String.fromCharCode(i))),
+    l`\\`,
+    l`"`
+  );
   const escapedControls = oneOf(
     l('\\n').mapResult(() => '\n'),
     l('\\"').mapResult(() => '"'),
@@ -55,7 +59,7 @@ export const stringNew = (() => {
 
   const rSolidus = l`\\\\`.mapResult((s) => s[0]);
 
-  const anyChar = takeUntil(any, controls).mapResult(join);
+  const anyChar = takeUntil(any, invalid).mapResult(join);
 
   const validSequence = oneOf(rSolidus, escapedControls, unicode, anyChar);
   return surroundedBy(
