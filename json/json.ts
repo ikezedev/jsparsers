@@ -1,11 +1,10 @@
 import {
   boolean,
-  literal,
+  literal as l,
   nullParser,
   number,
   optionalWhitespaces as ows,
   stringNew,
-  string,
 } from '~parsers/mod.ts';
 import { inOrder, oneOf, separatedBy, surroundedBy } from '~combinators/mod.ts';
 import {
@@ -63,8 +62,8 @@ const jsonBoolean: Parser<JSONBoolean> = boolean.map(
 
 export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
   parse(input: Input) {
-    const op = literal('[');
-    const cl = literal(']');
+    const op = surroundedBy(ows, l`[`);
+    const cl = surroundedBy(ows, l`]`);
     const elements = oneOf(
       jsonNull,
       jsonBoolean,
@@ -73,7 +72,7 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
       jsonObject,
       jsonArray
     );
-    const comma = literal(',');
+    const comma = l`,`;
     const sepParser = separatedBy(elements, inOrder(ows, comma, ows));
     const empty = surroundedBy(op, ows, cl).map(
       ({ input: { span } }) =>
@@ -90,12 +89,12 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
 
 export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
   parse(input: Input) {
-    const op = literal('{');
-    const cl = literal('}');
+    const op = surroundedBy(ows, l`{`);
+    const cl = surroundedBy(ows, l`}`);
     const key = inOrder(ows, jsonKey, ows)
       .map(({ result }) => result.second)
       .setExpects('key');
-    const colon = literal(':').setExpects('colon');
+    const colon = l`:`.setExpects('colon');
     const elements = oneOf(
       jsonNull,
       jsonBoolean,
@@ -113,7 +112,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       key: result.first,
       value: result.third,
     }));
-    const comma = inOrder(ows, literal`,`, ows).setExpects('comma');
+    const comma = inOrder(ows, l`,`, ows).setExpects('comma');
     const sepParser = separatedBy(entry, comma);
     const empty = surroundedBy(op, ows, cl)
       .map(
@@ -140,49 +139,87 @@ const json: Parser<JSONValue> = surroundedBy(
 );
 export const Json = {
   parse<T = any>(text: string, reviver?: Reviver) {
+    if (typeof text === 'symbol')
+      throw new TypeError('Cannot convert a Symbol value to a string');
+
     const output = json.parse({
-      source: text.toString(),
+      source: String(text),
       span: { lo: 0, hi: 0 },
     });
+
     if ('result' in output) {
+      // move to parser
       const hi = output.input.span.hi;
-      if (hi !== text.toString().length)
+      if (hi !== String(text).length)
         throw new SyntaxError(`Unexpected token in JSON at ${hi}`);
-      return processJSONValue(output.result, reviver) as T;
+
+      return reviveObj(processJSONValue(output.result), reviver) as T;
     }
     throw new SyntaxError(output.error);
   },
 };
 
-export function processJSONValue(input: JSONValue, reviver?: Reviver): unknown {
-  let result: unknown;
+Object.defineProperties(Json, {
+  parse: {
+    enumerable: false,
+  },
+  [Symbol('Symbol.toStringTag')]: {
+    configurable: true,
+    value: 'JSON',
+  },
+});
+
+export function processJSONValue(input: JSONValue): unknown {
   switch (input.kind) {
     case Kind.Null:
-      result = null;
-      break;
+      return null;
     case Kind.String:
-      result = input.value;
-      break;
+      return input.value;
     case Kind.Number:
-      result = input.value;
-      break;
+      return input.value;
     case Kind.Object:
-      result = input.value.reduce((a, b) => {
-        const [key, value] = [b.key.value, processJSONValue(b.value)];
-        if (reviver) {
-          a[key] = reviver.apply({ [key]: value }, [key, value]);
-        } else {
-          a[b.key.value] = processJSONValue(b.value);
-        }
+      return input.value.reduce((a, b) => {
+        a[b.key.value] = processJSONValue(b.value);
         return a;
       }, {} as Record<string, unknown>);
-      break;
     case Kind.Array:
-      result = input.value.map((v) => processJSONValue(v));
-      break;
+      return input.value.map((v) => processJSONValue(v));
     case Kind.Boolean:
-      result = input.value;
+      return input.value;
   }
-  if (reviver) return reviver.apply({ '': result }, ['', result]);
-  return result;
+}
+
+type R = Record<string, unknown>;
+
+function reviveObj(parsed: unknown, reviver?: Reviver, topLevel = true) {
+  reviver =
+    typeof reviver == 'function' ? reviver : (_: string, v: unknown) => v;
+
+  if (typeof parsed !== 'object' || parsed === null)
+    return reviver.apply({ '': parsed }, ['', parsed]);
+
+  const isArray = Array.isArray(parsed);
+  const keys = isArray
+    ? Array.from({ length: parsed.length }, (_, i) => String(i))
+    : Object.keys(parsed);
+
+  for (const key of keys) {
+    const props = Object.getOwnPropertyDescriptor(parsed, key);
+
+    const val = (parsed as R)[key];
+    const nextValue =
+      typeof val !== 'object' ? val : reviveObj(val, reviver, false);
+
+    const value = reviver.bind(parsed)(key, nextValue);
+
+    if (props?.configurable) {
+      (parsed as R)[key] = value;
+
+      // TODO: re-arrange
+      if (value === undefined) delete (parsed as R)[key];
+    }
+  }
+
+  Object.assign(parsed, Object.getPrototypeOf(parsed));
+  return !topLevel ? parsed : reviver.bind({ '': parsed })('', parsed);
 }
