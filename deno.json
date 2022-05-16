@@ -1,7 +1,8 @@
 {
   "tasks": {
     "test": "deno test --importmap=import_map.json",
-    "tc39": "deno run -A json/tests/tc39_setup.ts "
+    "tc39:setup": "deno run -A json/tests/tc39_setup.ts",
+    "tc39:test": "deno task tc39:setup && deno test --no-check json/tests/test262.test.ts && rm json/tests/test262.test.ts"
   },
   "importMap": "./import_map.json"
 }
