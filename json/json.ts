@@ -193,33 +193,32 @@ type R = Record<string, unknown>;
 
 function reviveObj(parsed: unknown, reviver?: Reviver, topLevel = true) {
   reviver =
-    typeof reviver == 'function' ? reviver : (_: string, v: unknown) => v;
+    typeof reviver === 'function' ? reviver : (_: string, v: unknown) => v;
 
-  if (typeof parsed !== 'object' || parsed === null)
-    return reviver.apply({ '': parsed }, ['', parsed]);
+  if (typeof parsed === 'object' && parsed !== null) {
+    const isArray = Array.isArray(parsed);
+    const keys = isArray
+      ? Array.from({ length: parsed.length }, (_, i) => String(i))
+      : Object.keys(parsed);
 
-  const isArray = Array.isArray(parsed);
-  const keys = isArray
-    ? Array.from({ length: parsed.length }, (_, i) => String(i))
-    : Object.keys(parsed);
+    for (const key of keys) {
+      const { value, configurable } =
+        Object.getOwnPropertyDescriptor(parsed, key) ?? {};
 
-  for (const key of keys) {
-    const props = Object.getOwnPropertyDescriptor(parsed, key);
+      const nextValue =
+        typeof value !== 'object' ? value : reviveObj(value, reviver, false);
 
-    const val = (parsed as R)[key];
-    const nextValue =
-      typeof val !== 'object' ? val : reviveObj(val, reviver, false);
+      const val = reviver.bind(parsed)(key, nextValue);
 
-    const value = reviver.bind(parsed)(key, nextValue);
+      if (configurable) {
+        (parsed as R)[key] = value;
 
-    if (props?.configurable) {
-      (parsed as R)[key] = value;
-
-      // TODO: re-arrange
-      if (value === undefined) delete (parsed as R)[key];
+        // TODO: re-arrange
+        if (val === undefined) delete (parsed as R)[key];
+      }
     }
-  }
 
-  Object.assign(parsed, Object.getPrototypeOf(parsed));
+    Object.assign(parsed, Object.getPrototypeOf(parsed));
+  }
   return !topLevel ? parsed : reviver.bind({ '': parsed })('', parsed);
 }
