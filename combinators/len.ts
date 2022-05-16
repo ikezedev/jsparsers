@@ -12,7 +12,7 @@ export const len = <T, N extends number>(
         return { result: result as Tuple<T, N>, ...rest };
       else
         return {
-          error: `expect ${length} occurrences of ${parser.expects}`,
+          error: `expected ${length} occurrences of ${parser.expects}`,
           ...rest,
         };
     });
