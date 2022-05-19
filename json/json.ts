@@ -24,7 +24,7 @@ type Reviver = (key: string, value: unknown) => unknown;
 
 const jsonString: Parser<JSONString> = stringNew.map(
   ({ result: value, input: { span } }) => ({
-    kind: Kind.String,
+    kind: Kind.JSONString,
     value,
     span,
   })
@@ -38,7 +38,7 @@ const jsonKey: Parser<JSONKey> = jsonString.map(
 );
 const jsonNumber: Parser<JSONNumber> = number.map(
   ({ result: value, input: { span } }) => ({
-    kind: Kind.Number,
+    kind: Kind.JSONNumber,
     value,
     span,
   })
@@ -46,7 +46,7 @@ const jsonNumber: Parser<JSONNumber> = number.map(
 
 const jsonNull: Parser<JSONNull> = nullParser.map(
   ({ result: value, input: { span } }) => ({
-    kind: Kind.Null,
+    kind: Kind.JSONNull,
     value,
     span,
   })
@@ -54,7 +54,7 @@ const jsonNull: Parser<JSONNull> = nullParser.map(
 
 const jsonBoolean: Parser<JSONBoolean> = boolean.map(
   ({ result: value, input: { span } }) => ({
-    kind: Kind.Boolean,
+    kind: Kind.JSONBoolean,
     value,
     span,
   })
@@ -76,11 +76,11 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
     const sepParser = separatedBy(elements, inOrder(ows, comma, ows));
     const empty = surroundedBy(op, ows, cl).map(
       ({ input: { span } }) =>
-        ({ kind: Kind.Array, value: [] as JSONValue[], span } as const)
+        ({ kind: Kind.JSONArray, value: [] as JSONValue[], span } as const)
     );
     const nonEmpty = surroundedBy(op, sepParser, cl).map(
       ({ result: value, input: { span } }) =>
-        ({ kind: Kind.Array, value, span } as const)
+        ({ kind: Kind.JSONArray, value, span } as const)
     );
     return oneOf(nonEmpty, empty).parse(input);
   },
@@ -118,7 +118,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       .map(
         ({ input: { span } }) =>
           ({
-            kind: Kind.Object,
+            kind: Kind.JSONObject,
             value: [] as JSONObject['value'],
             span,
           } as const)
@@ -126,7 +126,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       .setExpects('nothing');
     const nonEmpty = surroundedBy(op, sepParser, cl).map(
       ({ result: value, input: { span } }) =>
-        ({ kind: Kind.Object, value, span } as const)
+        ({ kind: Kind.JSONObject, value, span } as const)
     );
     return oneOf(nonEmpty, empty).parse(input);
   },
@@ -171,20 +171,20 @@ Object.defineProperties(Json, {
 
 export function processJSONValue(input: JSONValue): unknown {
   switch (input.kind) {
-    case Kind.Null:
+    case Kind.JSONNull:
       return null;
-    case Kind.String:
+    case Kind.JSONString:
       return input.value;
-    case Kind.Number:
+    case Kind.JSONNumber:
       return input.value;
-    case Kind.Object:
+    case Kind.JSONObject:
       return input.value.reduce((a, b) => {
         a[b.key.value] = processJSONValue(b.value);
         return a;
       }, {} as Record<string, unknown>);
-    case Kind.Array:
+    case Kind.JSONArray:
       return input.value.map((v) => processJSONValue(v));
-    case Kind.Boolean:
+    case Kind.JSONBoolean:
       return input.value;
   }
 }
@@ -222,3 +222,5 @@ function reviveObj(parsed: unknown, reviver?: Reviver, topLevel = true) {
   }
   return !topLevel ? parsed : reviver.bind({ '': parsed })('', parsed);
 }
+
+export { json as jsonParser };

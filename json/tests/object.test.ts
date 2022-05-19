@@ -2,7 +2,7 @@ import { assert, assertEquals, describe, it } from 'deno.tests';
 import { jsonObject, processJSONValue } from '../json.ts';
 import { jsonTest } from './test_util.ts';
 
-const objectArrayParser = describe(jsonTest, 'boolean parser');
+const objectArrayParser = describe(jsonTest, 'object parser');
 
 it(objectArrayParser, 'simple elements', () => {
   const input = {
