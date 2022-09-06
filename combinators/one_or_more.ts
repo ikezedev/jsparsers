@@ -4,31 +4,24 @@ export const oneOrMore = <T>(parser: Parser<T>): Parser<T[]> =>
   Parser.new<T[]>({
     parse(input: Input) {
       const outputs: IResult<T>[] = [];
-      let lastOutput = parser.parse(input);
-      if ('result' in lastOutput) outputs.push(lastOutput);
-      let nextInput = lastOutput.input;
+      let nextInput = parser.parse(input);
+      if ('result' in nextInput) {
+        outputs.push(nextInput);
+      } else {
+        return nextInput;
+      }
 
       while (
         nextInput.span.hi < nextInput.source.length &&
-        !('error' in lastOutput)
+        !('error' in nextInput)
       ) {
-        lastOutput = parser.parse(nextInput);
-        if ('result' in lastOutput) outputs.push(lastOutput);
-        nextInput = lastOutput.input;
-      }
-
-      if (!outputs.length) {
-        return {
-          input,
-          error: `Expected at least one ${parser.expects}`,
-        };
+        nextInput = parser.parse(nextInput);
+        if ('result' in nextInput) outputs.push(nextInput);
       }
       return {
+        source: input.source,
         result: outputs.map((o) => o.result),
-        input: {
-          ...nextInput,
-          span: { ...nextInput.span, lo: outputs[0].input.span.lo },
-        },
+        span: { hi: nextInput.span.hi, lo: outputs[0].span.lo },
       };
     },
     expects: parser.expects,

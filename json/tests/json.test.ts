@@ -3,20 +3,18 @@ import { assert, assertEquals, describe, it } from 'deno.tests';
 import { jsonParser, processJSONValue } from '../json.ts';
 import { Kind, visit } from '../ast.ts';
 import { jsonTest } from './test_util.ts';
+import { Source } from '../../types/parser.ts';
 
 const jsonParserTest = describe(jsonTest, 'json parser');
 
-Deno.test('simple elements', () => {
-  const input = {
-    source: `{"name": "ike", "age": 3, "friend": "Tunde"}`,
-    span: { lo: 0, hi: 0 },
-  };
+Deno.test('simple visit', () => {
+  const input = Source.toDefaultInput(
+    `{"name": "ike", "age": 3, "friend": "Tunde"}`
+  );
   const parsed = jsonParser.parse(input);
   assert('result' in parsed);
   const test = visit(parsed.result, {});
   assertEquals(parsed.result, test);
-
-  console.log(JSON.stringify(parsed, null, 2));
 
   const test2 = visit(parsed.result, {
     JSONString(node) {
@@ -31,7 +29,7 @@ Deno.test('simple elements', () => {
       node.value;
     },
   });
-  console.log(JSON.stringify(test2, null, 2));
+
   assertEquals(processJSONValue(test2), {
     name: ['ike'],
     age: 3,
@@ -41,10 +39,9 @@ Deno.test('simple elements', () => {
 });
 
 it(jsonParserTest, 'nested simple elements', () => {
-  const input = {
-    source: `{"name": "ike", "age": 3, "info": {"city": "Oslo", "poBox": 0151}}`,
-    span: { lo: 0, hi: 0 },
-  };
+  const input = Source.toDefaultInput(
+    `{"name": "ike", "age": 3, "info": {"city": "Oslo", "poBox": 0151}}`
+  );
   const parsed = jsonParser.parse(input);
   // console.log({ parsed });
   // assert('result' in parsed);
@@ -58,10 +55,7 @@ it(jsonParserTest, 'nested simple elements', () => {
 });
 
 it(jsonParserTest, 'nested simple elements 2', () => {
-  const input = {
-    source: `{"1": 1, "2": 2, "3": { "4": 4 } }`,
-    span: { lo: 0, hi: 0 },
-  };
+  const input = Source.toDefaultInput(`{"1": 1, "2": 2, "3": { "4": 4 } }`);
   const parsed = jsonParser.parse(input);
   // console.log({ parsed });
   // assert('result' in parsed);

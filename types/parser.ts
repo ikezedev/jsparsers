@@ -1,5 +1,5 @@
 export type Input = {
-  source: string;
+  source: Source;
   span: Span;
 };
 
@@ -8,17 +8,39 @@ export type Span = {
   hi: number;
 };
 
-export type IResult<T> = {
-  input: Input;
+export type IResult<T> = Input & {
   result: T;
 };
 
-export type IError = {
-  input: Input;
+export type IError = Input & {
   error: string;
 };
 
 export type Output<T> = IResult<T> | IError;
+
+export class Source {
+  length: number;
+  constructor(private src: string) {
+    this.length = src.length;
+  }
+  substring(start: number, end?: number) {
+    return this.src.substring(start, end);
+  }
+  peek(index: number) {
+    return this.src[index];
+  }
+
+  peekHi(input: Input) {
+    return this.peek(input.span.hi);
+  }
+
+  static toDefaultInput(src: string): Input {
+    return {
+      source: new Source(src),
+      span: { lo: 0, hi: 0 },
+    };
+  }
+}
 export class Parser<T> {
   private constructor(
     public parse: (inp: Input) => Output<T>,
@@ -67,6 +89,30 @@ export class Parser<T> {
 
   mapResult<U>(fn: (result: T) => U) {
     return this.map(({ result }) => fn(result));
+  }
+
+  inspect<U extends Output<T> = Output<T>>(
+    fn: (out: U) => void,
+    guard?: (o: Output<T>) => o is U
+  ) {
+    const parseFn = this.parse;
+    const expects = this.expects;
+    return Parser.new({
+      parse(input: Input) {
+        const output = parseFn(input);
+        if (guard?.(output) || !guard) fn(output as U);
+        return output;
+      },
+      expects,
+    });
+  }
+
+  inspectResult(fn: (out: Output<T>) => void) {
+    return this.inspect(fn, (o): o is IResult<T> => 'result' in o);
+  }
+
+  inspectError(fn: (error: IError) => void) {
+    return this.inspect(fn, (o): o is IError => 'error' in o);
   }
 
   // TODO: take whole output like in map

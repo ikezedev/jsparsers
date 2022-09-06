@@ -1,9 +1,9 @@
 import { Parser } from '~types/parser.ts';
 import { inOrder, oneOf, oneOrMore } from '~combinators/mod.ts';
-import { literal as l } from './literal.ts';
+import { literal as l } from '~parsers/literal.ts';
 
 export const number: Parser<number> = (() => {
-  const digit = oneOrMore(oneOf(...[...'0123456789'].map(l))).mapResult((r) =>
+  const digit = oneOrMore(oneOf([...'0123456789'].map(l))).mapResult((r) =>
     r.join('')
   );
   const fraction = inOrder(digit, l`.`, digit).mapResult(String);

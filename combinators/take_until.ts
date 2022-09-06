@@ -15,15 +15,13 @@ export const takeUntil = <T, U>(
         const current = parser.parse(nextInput);
         if ('result' in current) {
           result.push(current.result);
-          nextInput = current.input;
+          nextInput = current;
         } else {
           if (result.length)
             return {
               result,
-              input: {
-                ...nextInput,
-                span: { ...nextInput.span, lo: input.span.hi },
-              },
+              source: nextInput.source,
+              span: { hi: nextInput.span.hi, lo: input.span.hi },
             };
           return current;
         }
@@ -31,12 +29,14 @@ export const takeUntil = <T, U>(
       if (result.length)
         return {
           result,
-          input: {
-            ...nextInput,
-            span: { ...nextInput.span, lo: input.span.hi },
-          },
+          source: nextInput.source,
+          span: { hi: nextInput.span.hi, lo: input.span.hi },
         };
-      return { error: `unexpected token`, input };
+      return {
+        error: `unexpected token`,
+        source: input.source,
+        span: input.span,
+      };
     },
     expects: parser.expects,
   });

@@ -6,24 +6,33 @@ import {
   surroundedBy,
 } from '~combinators/mod.ts';
 import { Parser, Input } from '~types/parser.ts';
-import { any } from '../combinators/any.ts';
-import { takeUntil } from '../combinators/take_until.ts';
-import { literal as l } from './literal.ts';
+import { any } from '~combinators/any.ts';
+import { takeUntil } from '~combinators/take_until.ts';
+import { literal as l } from '~parsers/literal.ts';
 
 export const string = Parser.new<string>({
   parse(input: Input) {
     const { source, span } = input;
     const lo = span.hi;
-    if (source[lo] === '"') {
+    if (source.peek(lo) === '"') {
       const hi = source.substring(lo + 1).indexOf('"');
       if (hi === -1)
-        return { error: `expected a closing quote for quote at ${lo}`, input };
+        return {
+          error: `expected a closing quote for quote at ${lo}`,
+          span: input.span,
+          source: input.source,
+        };
       return {
         result: source.substring(lo, lo + hi + 2),
-        input: { ...input, span: { lo, hi: lo + hi + 2 } },
+        span: { lo, hi: lo + hi + 2 },
+        source,
       };
     }
-    return { error: `expected a string at ${lo}`, input };
+    return {
+      error: `expected a string at ${lo}`,
+      span: input.span,
+      source: input.source,
+    };
   },
   expects: 'string',
 });
@@ -43,13 +52,13 @@ export const stringNew = (() => {
     l`"`
   );
   const escapedControls = oneOf(
-    l('\\n').mapResult(() => '\n'),
-    l('\\"').mapResult(() => '"'),
-    l('\\/').mapResult(() => '/'),
-    l('\\b').mapResult(() => '\b'),
-    l('\\f').mapResult(() => '\f'),
-    l('\\r').mapResult(() => '\r'),
-    l('\\t').mapResult(() => '\t')
+    l`\\n`.mapResult(() => '\n'),
+    l`\\"`.mapResult(() => '"'),
+    l`\\/`.mapResult(() => '/'),
+    l`\\b`.mapResult(() => '\b'),
+    l`\\f`.mapResult(() => '\f'),
+    l`\\r`.mapResult(() => '\r'),
+    l`\\t`.mapResult(() => '\t')
   );
   //
   const hex = oneOf(...'ABCDEFabcdef0123456789'.split('').map(l));

@@ -18,12 +18,12 @@ import {
   JSONNull,
   JSONBoolean,
 } from './ast.ts';
-import { Input, Parser } from '~types/parser.ts';
+import { Input, Parser, Source } from '~types/parser.ts';
 
 type Reviver = (key: string, value: unknown) => unknown;
 
 const jsonString: Parser<JSONString> = stringNew.map(
-  ({ result: value, input: { span } }) => ({
+  ({ result: value, span }) => ({
     kind: Kind.JSONString,
     value,
     span,
@@ -37,7 +37,7 @@ const jsonKey: Parser<JSONKey> = jsonString.map(
   })
 );
 const jsonNumber: Parser<JSONNumber> = number.map(
-  ({ result: value, input: { span } }) => ({
+  ({ result: value, span }) => ({
     kind: Kind.JSONNumber,
     value,
     span,
@@ -45,7 +45,7 @@ const jsonNumber: Parser<JSONNumber> = number.map(
 );
 
 const jsonNull: Parser<JSONNull> = nullParser.map(
-  ({ result: value, input: { span } }) => ({
+  ({ result: value, span }) => ({
     kind: Kind.JSONNull,
     value,
     span,
@@ -53,7 +53,7 @@ const jsonNull: Parser<JSONNull> = nullParser.map(
 );
 
 const jsonBoolean: Parser<JSONBoolean> = boolean.map(
-  ({ result: value, input: { span } }) => ({
+  ({ result: value, span }) => ({
     kind: Kind.JSONBoolean,
     value,
     span,
@@ -75,11 +75,11 @@ export const jsonArray: Parser<JSONArray> = Parser.new<JSONArray>({
     const comma = l`,`;
     const sepParser = separatedBy(elements, inOrder(ows, comma, ows));
     const empty = surroundedBy(op, ows, cl).map(
-      ({ input: { span } }) =>
+      ({ span }) =>
         ({ kind: Kind.JSONArray, value: [] as JSONValue[], span } as const)
     );
     const nonEmpty = surroundedBy(op, sepParser, cl).map(
-      ({ result: value, input: { span } }) =>
+      ({ result: value, span }) =>
         ({ kind: Kind.JSONArray, value, span } as const)
     );
     return oneOf(nonEmpty, empty).parse(input);
@@ -116,7 +116,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
     const sepParser = separatedBy(entry, comma);
     const empty = surroundedBy(op, ows, cl)
       .map(
-        ({ input: { span } }) =>
+        ({ span }) =>
           ({
             kind: Kind.JSONObject,
             value: [] as JSONObject['value'],
@@ -125,7 +125,7 @@ export const jsonObject: Parser<JSONObject> = Parser.new<JSONObject>({
       )
       .setExpects('nothing');
     const nonEmpty = surroundedBy(op, sepParser, cl).map(
-      ({ result: value, input: { span } }) =>
+      ({ result: value, span }) =>
         ({ kind: Kind.JSONObject, value, span } as const)
     );
     return oneOf(nonEmpty, empty).parse(input);
@@ -142,14 +142,11 @@ export const Json = {
     if (typeof text === 'symbol')
       throw new TypeError('Cannot convert a Symbol value to a string');
 
-    const output = json.parse({
-      source: String(text),
-      span: { lo: 0, hi: 0 },
-    });
+    const output = json.parse(Source.toDefaultInput(String(text)));
 
     if ('result' in output) {
       // move to parser
-      const hi = output.input.span.hi;
+      const hi = output.span.hi;
       if (hi !== String(text).length)
         throw new SyntaxError(`Unexpected token in JSON at ${hi}`);
 

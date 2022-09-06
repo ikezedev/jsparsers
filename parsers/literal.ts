@@ -12,11 +12,13 @@ export const literal = <T extends string | TemplateStringsArray>(
       if (result === strLiteral.toString())
         return {
           result,
-          input: { ...input, span: { lo, hi } },
+          source: input.source,
+          span: { lo, hi },
         };
       return {
-        error: `expected literal: ${strLiteral.toString()} from ${lo} to ${hi}`,
-        input,
+        error: `expected literal: ${strLiteral.toString()} from ${lo} to ${hi}, got ${result}`,
+        source: input.source,
+        span: input.span,
       };
     },
     expects: strLiteral.toString(),
