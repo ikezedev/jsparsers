@@ -4,9 +4,16 @@ import {
   nullParser,
   number,
   optionalWhitespaces as ows,
-  stringNew,
 } from '~parsers/mod.ts';
-import { inOrder, oneOf, separatedBy, surroundedBy } from '~combinators/mod.ts';
+import {
+  inOrder,
+  len,
+  oneOf,
+  oneOrMore,
+  separatedBy,
+  surroundedBy,
+  takeUntil,
+} from '~combinators/mod.ts';
 import {
   JSONValue,
   JSONString,
@@ -19,16 +26,48 @@ import {
   JSONBoolean,
 } from './ast.ts';
 import { Input, Parser, Source } from '~types/parser.ts';
+import { any } from '../combinators/any.ts';
 
 type Reviver = (key: string, value: unknown) => unknown;
+const join = (arr: string[] | readonly string[]) => arr.join('');
 
-const jsonString: Parser<JSONString> = stringNew.map(
-  ({ result: value, span }) => ({
+export const jsonString: Parser<JSONString> = (() => {
+  const invalid = oneOf(
+    ...Array.from({ length: 32 }, (_, i) => l(String.fromCharCode(i))),
+    l`\\`,
+    l`"`
+  );
+  const escapedControls = oneOf(
+    l`\\n`.mapResult(() => '\n'),
+    l`\\"`.mapResult(() => '"'),
+    l`\\/`.mapResult(() => '/'),
+    l`\\b`.mapResult(() => '\b'),
+    l`\\f`.mapResult(() => '\f'),
+    l`\\r`.mapResult(() => '\r'),
+    l`\\t`.mapResult(() => '\t')
+  );
+
+  const hex = oneOf(...'ABCDEFabcdef0123456789'.split('').map(l));
+  const unicode = inOrder(l`\\`, l`u`, len(hex, 4).mapResult(join)).mapResult(
+    ({ third: c }) => String.fromCharCode(parseInt(c, 16))
+  );
+
+  const rSolidus = l`\\\\`.mapResult((s) => s[0]);
+
+  const anyChar = takeUntil(any, invalid).mapResult(join);
+
+  const validSequence = oneOf(rSolidus, escapedControls, unicode, anyChar);
+  const stringParser = surroundedBy(
+    l`"`,
+    oneOf(oneOrMore(validSequence).mapResult(join), l``)
+  ).setExpects('string');
+
+  return stringParser.map(({ result: value, span }) => ({
     kind: Kind.JSONString,
     value,
     span,
-  })
-);
+  }));
+})();
 
 const jsonKey: Parser<JSONKey> = jsonString.map(
   ({ result: { kind: _, ...rest } }) => ({

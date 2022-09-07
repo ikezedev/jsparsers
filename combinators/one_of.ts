@@ -1,4 +1,4 @@
-import { Parser, Input } from '~types/parser.ts';
+import { Parser, Input, ParseError } from '~types/parser.ts';
 
 export function oneOf<T>(...parsers: Parser<T>[]): Parser<T>;
 export function oneOf<T>(parsers: Parser<T>[]): Parser<T>;
@@ -41,13 +41,12 @@ export function oneOf(
         const output = parser.parse(input);
         if ('result' in output) return output;
       }
-      return {
-        span: input.span,
-        source: input.source,
-        error: `Expected one of ${allParsers
+      return ParseError.fromInput(
+        input,
+        `Expected one of ${allParsers
           .map((p) => p.expects)
-          .join(', ')} but got ${input.source.peekHi(input)}`,
-      };
+          .join(', ')} but got ${input.source.peekHi(input)}`
+      );
     },
     expects: parsers
       .map((p) => p.expects)

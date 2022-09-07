@@ -16,6 +16,18 @@ export type IError = Input & {
   error: string;
 };
 
+export class ParseResult<T> implements IResult<T> {
+  constructor(public source: Source, public span: Span, public result: T) {}
+}
+
+export class ParseError implements IError {
+  constructor(public source: Source, public span: Span, public error: string) {}
+
+  static fromInput(output: Input, error: string) {
+    return new ParseError(output.source, output.span, error);
+  }
+}
+
 export type Output<T> = IResult<T> | IError;
 
 export class Source {

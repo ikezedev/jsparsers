@@ -4,3 +4,4 @@ export * from './one_or_more.ts';
 export * from './separated_by.ts';
 export * from './surrounded_by.ts';
 export * from './len.ts';
+export * from './take_until.ts';

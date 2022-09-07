@@ -1,4 +1,4 @@
-import { Parser, Input } from '~types/parser.ts';
+import { Parser, Input, ParseError } from '~types/parser.ts';
 
 export const literal = <T extends string | TemplateStringsArray>(
   strLiteral: T
@@ -15,11 +15,10 @@ export const literal = <T extends string | TemplateStringsArray>(
           source: input.source,
           span: { lo, hi },
         };
-      return {
-        error: `expected literal: ${strLiteral.toString()} from ${lo} to ${hi}, got ${result}`,
-        source: input.source,
-        span: input.span,
-      };
+      return ParseError.fromInput(
+        input,
+        `expected literal: ${strLiteral.toString()} from ${lo} to ${hi}, got ${result}`
+      );
     },
     expects: strLiteral.toString(),
   });

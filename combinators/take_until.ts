@@ -1,4 +1,4 @@
-import { Parser, Input } from '~types/parser.ts';
+import { Parser, Input, ParseError } from '~types/parser.ts';
 
 export const takeUntil = <T, U>(
   parser: Parser<T>,
@@ -32,11 +32,7 @@ export const takeUntil = <T, U>(
           source: nextInput.source,
           span: { hi: nextInput.span.hi, lo: input.span.hi },
         };
-      return {
-        error: `unexpected token`,
-        source: input.source,
-        span: input.span,
-      };
+      return ParseError.fromInput(input, `unexpected token`);
     },
     expects: parser.expects,
   });
