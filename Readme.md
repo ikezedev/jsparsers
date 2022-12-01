@@ -40,3 +40,10 @@
     ```ts
     surroundedBy(start: Parser<U>, Parser<T>, end: Parser<V>): Parser<T[]>
     ```
+
+## Run Test
+
+Ensure you have [Deno](https://deno.land) installed
+
+- Run `deno task test` to run all tests except the tc39 tests
+- Run `deno task test:tc39` to run tc39 compliance tests for [json](./json/mod.ts) parser

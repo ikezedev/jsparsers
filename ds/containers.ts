@@ -4,7 +4,7 @@ export interface Show {
 
 export class Pair<T extends Show, U extends Show> {
   constructor(public first: T, public second: U) {}
-  static new<T, U>(t: T, u: U) {
+  static new<T extends Show, U extends Show>(t: T, u: U) {
     return new Pair(t, u);
   }
   toString() {
@@ -15,7 +15,7 @@ export class Pair<T extends Show, U extends Show> {
 
 export class Triple<T extends Show, U extends Show, V extends Show> {
   constructor(public first: T, public second: U, public third: V) {}
-  static new<T, U, V>(t: T, u: U, v: V) {
+  static new<T extends Show, U extends Show, V extends Show>(t: T, u: U, v: V) {
     return new Triple(t, u, v);
   }
   toString() {
